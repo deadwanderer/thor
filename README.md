@@ -13,7 +13,7 @@ Add `RegisterClassA :: proc(lpWndClass: ^WNDCLASSA) -> ATOM ---`
 
 Uncomment or add `MessageBoxA :: proc(hWnd: HWND, lpText: LPCSTR, lpCaption: LPCSTR, uType: UINT) -> c_int ---`
 
-Add `CreateWindowExA :: proc(dwExStyle: DWORD, lpClassName: LPCSTR,	lpWindowName: LPCSTR, dwStyle: DWORD, X: c_int, Y: c_int, nWidth: c_int, nHeight: c_int, hWndParent: HWND, hMenu: HMENU, hInstance: HINSTANCE, lpParam: LPVOID,) -> HWND ---`
+Add `CreateWindowExA :: proc(dwExStyle: DWORD, lpClassName: LPCSTR, lpWindowName: LPCSTR, dwStyle: DWORD, X: c_int, Y: c_int, nWidth: c_int, nHeight: c_int, hWndParent: HWND, hMenu: HMENU, hInstance: HINSTANCE, lpParam: LPVOID,) -> HWND ---`
 
 Add `DispatchMessageA :: proc(lpMsg: ^MSG) -> LRESULT ---`
 
