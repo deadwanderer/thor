@@ -2,21 +2,23 @@ package engine
 
 EventContext :: struct {
 	data: struct #raw_union {
-		i64: [2]i64,
-		u64: [2]u64,
-		f64: [2]f64,
-		i32: [4]i32,
-		u32: [4]u32,
-		f32: [4]f32,
-		i16: [8]i16,
-		u16: [8]u16,
-		i8:  [16]i8,
-		u8:  [16]u8,
-		c:   [16]byte,
+		i64:    [2]i64,
+		u64:    [2]u64,
+		f64:    [2]f64,
+		i32:    [4]i32,
+		u32:    [4]u32,
+		f32:    [4]f32,
+		i16:    [8]i16,
+		u16:    [8]u16,
+		i8:     [16]i8,
+		u8:     [16]u8,
+		c:      [16]byte,
+		key:    Keys,
+		button: Buttons,
 	},
 }
 
-SystemEventCode :: enum {
+SystemEventCode :: enum u16 {
 	ApplicationQuit = 0x01,
 	KeyPressed      = 0x02,
 	KeyReleased     = 0x03,
@@ -28,7 +30,12 @@ SystemEventCode :: enum {
 	Max             = 0xFF,
 }
 
-on_event_fn :: proc(code: u16, sender: rawptr, listener_inst: rawptr, data: EventContext) -> b8
+on_event_fn :: proc(
+	code: SystemEventCode,
+	sender: rawptr,
+	listener_inst: rawptr,
+	data: EventContext,
+) -> b8
 
 @(private = "file")
 RegisteredEvent :: struct {
@@ -75,7 +82,7 @@ event_shutdown :: proc() {
 }
 
 @(export)
-event_register :: proc(code: u16, listener: rawptr, on_event: on_event_fn) -> b8 {
+event_register :: proc(code: SystemEventCode, listener: rawptr, on_event: on_event_fn) -> b8 {
 	if !IS_INITIALIZED {
 		return false
 	}
@@ -96,7 +103,7 @@ event_register :: proc(code: u16, listener: rawptr, on_event: on_event_fn) -> b8
 }
 
 @(export)
-event_unregister :: proc(code: u16, listener: rawptr, on_event: on_event_fn) -> b8 {
+event_unregister :: proc(code: SystemEventCode, listener: rawptr, on_event: on_event_fn) -> b8 {
 	if !IS_INITIALIZED {
 		return false
 	}
@@ -117,7 +124,7 @@ event_unregister :: proc(code: u16, listener: rawptr, on_event: on_event_fn) -> 
 }
 
 @(export)
-event_fire :: proc(code: u16, sender: rawptr, ctx: EventContext) -> b8 {
+event_fire :: proc(code: SystemEventCode, sender: rawptr, ctx: EventContext) -> b8 {
 	if !IS_INITIALIZED {return false}
 
 	registered_count := len(STATE.registered[code].events)

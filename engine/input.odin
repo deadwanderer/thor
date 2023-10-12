@@ -182,9 +182,9 @@ input_process_key :: proc(key: Keys, pressed: b8) {
 		STATE.keyboard_current.keys[key] = pressed
 
 		ctx: EventContext = {}
-		ctx.data.u16[0] = u16(key)
+		ctx.data.key = key
 		event_fire(
-			u16(SystemEventCode.KeyPressed) if pressed else u16(SystemEventCode.KeyReleased),
+			SystemEventCode.KeyPressed if pressed else SystemEventCode.KeyReleased,
 			nil,
 			ctx,
 		)
@@ -256,9 +256,9 @@ input_process_button :: proc(button: Buttons, pressed: b8) {
 		STATE.mouse_current.buttons[button] = pressed
 
 		ctx: EventContext = {}
-		ctx.data.u16[0] = u16(button)
+		ctx.data.button = button
 		event_fire(
-			u16(SystemEventCode.ButtonPressed) if pressed else u16(SystemEventCode.ButtonReleased),
+			SystemEventCode.ButtonPressed if pressed else SystemEventCode.ButtonReleased,
 			nil,
 			ctx,
 		)
@@ -273,14 +273,14 @@ input_process_mouse_move :: proc(x, y: i16) {
 		ctx: EventContext = {}
 		ctx.data.i16[0] = x
 		ctx.data.i16[1] = y
-		event_fire(u16(SystemEventCode.MouseMoved), nil, ctx)
+		event_fire(SystemEventCode.MouseMoved, nil, ctx)
 	}
 }
 
 input_process_mouse_wheel :: proc(z_delta: i8) {
 	ctx: EventContext = {}
 	ctx.data.i8[0] = z_delta
-	event_fire(u16(SystemEventCode.MouseWheel), nil, ctx)
+	event_fire(SystemEventCode.MouseWheel, nil, ctx)
 }
 
 @(private = "file")

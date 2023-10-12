@@ -50,6 +50,11 @@ application_create :: proc(game_inst: ^Game) -> b8 {
 	APP_STATE.is_running = true
 	APP_STATE.is_suspended = false
 
+
+	event_register(.ApplicationQuit, nil, application_on_event)
+	event_register(.KeyPressed, nil, application_on_key)
+	event_register(.KeyReleased, nil, application_on_key)
+
 	if !platform_startup(
 		   &APP_STATE.platform,
 		   game_inst.app_config.name,
@@ -100,8 +105,72 @@ application_run :: proc() -> b8 {
 	}
 
 	platform_shutdown(&APP_STATE.platform)
+
+	event_unregister(.ApplicationQuit, nil, application_on_event)
+	event_unregister(.KeyPressed, nil, application_on_key)
+	event_unregister(.KeyReleased, nil, application_on_key)
 	input_shutdown()
 	event_shutdown()
 
 	return true
+}
+
+application_on_event :: proc(
+	code: SystemEventCode,
+	sender: rawptr,
+	listener_inst: rawptr,
+	ctx: EventContext,
+) -> b8 {
+	#partial switch code {
+	case .ApplicationQuit:
+		{
+			TINFO("ApplicationQuit event received, shutting down.")
+			APP_STATE.is_running = false
+			return true
+		}
+	}
+	return false
+}
+
+application_on_key :: proc(
+	code: SystemEventCode,
+	sender: rawptr,
+	listener_inst: rawptr,
+	ctx: EventContext,
+) -> b8 {
+	#partial switch code {
+	case .KeyPressed:
+		{
+			#partial switch ctx.data.key {
+			case .Escape:
+				{
+					data: EventContext = {}
+					event_fire(.ApplicationQuit, nil, data)
+					return true
+				}
+			case .A:
+				{
+					TDEBUG("Explicit - 'A' key pressed!")
+				}
+			case:
+				{
+					TDEBUG("'%v' key pressed in window.", ctx.data.key)
+				}
+			}
+		}
+	case .KeyReleased:
+		{
+			#partial switch ctx.data.key {
+			case .B:
+				{
+					TDEBUG("Explicit - 'B' key released!")
+				}
+			case:
+				{
+					TDEBUG("'%v' key released in window.", ctx.data.key)
+				}
+			}
+		}
+	}
+	return false
 }

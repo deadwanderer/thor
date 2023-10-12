@@ -226,14 +226,50 @@ when THOR_PLATFORM == .Windows {
 			}
 		case WM_KEYDOWN, WM_KEYUP, WM_SYSKEYDOWN, WM_SYSKEYUP:
 			{
+pressed :b8= msg == WM_KEYDOWN || msg == WM_SYSKEYDOWN
+key:Keys = Keys(u16(w_param))
 
+input_process_key(key, pressed)
 			}
 		case WM_MOUSEMOVE:
-			{}
+			{
+				x_position:i32 = GET_X_LPARAM(l_param)
+				y_position:i32 = GET_Y_LPARAM(l_param)
+
+				input_process_mouse_move(i16(x_position), i16(y_position))
+			}
 		case WM_MOUSEWHEEL:
-			{}
+			{
+				z_delta := GET_WHEEL_DELTA_WPARAM(w_param)
+				if z_delta != 0 {
+					z_delta = -1 if z_delta < 0 else 1
+					input_process_mouse_wheel(i8(z_delta))
+				}
+			}
 		case WM_LBUTTONDOWN, WM_MBUTTONDOWN, WM_RBUTTONDOWN, WM_LBUTTONUP, WM_MBUTTONUP, WM_RBUTTONUP:
-			{}
+			{
+				pressed:b8 = msg == WM_LBUTTONDOWN || msg == WM_RBUTTONDOWN || msg == WM_MBUTTONDOWN
+				mouse_button := Buttons.MaxButtons
+				switch msg {
+					case WM_LBUTTONDOWN, WM_LBUTTONUP: {
+						mouse_button = Buttons.Left
+						break
+					}
+					case WM_RBUTTONDOWN, WM_RBUTTONUP: {
+						mouse_button = Buttons.Right
+						break
+					}
+					case WM_MBUTTONDOWN, WM_MBUTTONUP: {
+						mouse_button = Buttons.Middle
+						break
+					}
+				}
+
+				if mouse_button != .MaxButtons {
+					input_process_button(mouse_button, pressed)
+				}
+
+			}
 		}
 		return DefWindowProcA(hwnd, msg, w_param, l_param)
 	}
