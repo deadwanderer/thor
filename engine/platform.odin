@@ -12,7 +12,7 @@ platform_startup :: proc(
 	application_name: string,
 	x, y, width, height: i32,
 ) -> b8 {
-	fmt.println("Starting up with platform:", THOR_PLATFORM)
+	TINFO("Starting up with platform %s", THOR_PLATFORM)
 	return _platform_startup(plat_state, application_name, x, y, width, height)
 }
 
@@ -26,27 +26,22 @@ platform_pump_messages :: proc(plat_state: ^PlatformState) -> b8 {
 	return _platform_pump_messages(plat_state)
 }
 
-@(export)
 platform_allocate :: proc(size: u64, aligned: b8) -> rawptr {
 	return _platform_allocate(size, aligned)
 }
 
-@(export)
 platform_free :: proc(block: rawptr, aligned: b8) {
 	_platform_free(block, aligned)
 }
 
-@(export)
 platform_zero_memory :: proc(block: rawptr, size: u64) -> rawptr {
 	return _platform_zero_memory(block, size)
 }
 
-@(export)
 platform_copy_memory :: proc(dest, src: rawptr, size: u64) -> rawptr {
 	return _platform_copy_memory(dest, src, size)
 }
 
-@(export)
 platform_set_memory :: proc(dest: rawptr, value: i32, size: u64) -> rawptr {
 	return _platform_set_memory(dest, value, size)
 }

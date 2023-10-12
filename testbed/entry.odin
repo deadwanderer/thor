@@ -13,13 +13,12 @@ create_game :: proc(out_game: ^e.Game) -> b8 {
 	out_game.on_resize = game_on_resize
 	out_game.initialize = game_initialize
 
-	out_game.state = e.platform_allocate(size_of(GameState), false)
+	out_game.state = e.tallocate(size_of(GameState), .Game)
 
 	return true
 }
 
 main :: proc() {
 	game_inst: e.Game = {}
-	create_game(&game_inst)
-	e.engine_main(&game_inst)
+	e.engine_main(&game_inst, create_game)
 }

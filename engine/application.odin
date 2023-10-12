@@ -28,14 +28,13 @@ application_create :: proc(game_inst: ^Game) -> b8 {
 
 	APP_STATE.game_inst = game_inst
 
-	initialize_logging()
 
-	TFATAL("A test message: %.2f", 3.14)
-	TERROR("A test message: %f", 3.14)
-	TWARN("A test message: %f", 3.14)
-	TINFO("A test message: %f", 3.14)
-	TDEBUG("A test message: %f", 3.14)
-	TTRACE("A test message: %f", 3.14)
+	// TFATAL("A test message: %.2f", 3.14)
+	// TERROR("A test message: %f", 3.14)
+	// TWARN("A test message: %f", 3.14)
+	// TINFO("A test message: %f", 3.14)
+	// TDEBUG("A test message: %f", 3.14)
+	// TTRACE("A test message: %f", 3.14)
 
 	APP_STATE.is_running = true
 	APP_STATE.is_suspended = false
@@ -65,6 +64,8 @@ application_create :: proc(game_inst: ^Game) -> b8 {
 
 @(export)
 application_run :: proc() -> b8 {
+	TINFO(get_memory_usage_str())
+
 	for APP_STATE.is_running {
 		if !platform_pump_messages(&APP_STATE.platform) {
 			APP_STATE.is_running = false

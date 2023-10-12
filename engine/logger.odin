@@ -44,7 +44,6 @@ log_output :: proc(level: LogLevel, message: string, args: ..any) {
 	} else {
 		platform_console_write(out_message, level)
 	}
-	// fmt.printf("%s%s\n", level_strings[level], out_message)
 }
 
 @(export)

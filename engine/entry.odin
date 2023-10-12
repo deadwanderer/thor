@@ -1,8 +1,15 @@
 package engine
 
-// create_game_proc: proc(out_game: ^Game) -> b8
 
-engine_main :: proc(game_inst: ^Game) {
+engine_main :: proc(game_inst: ^Game, create_game: proc(out_game: ^Game) -> b8) {
+	initialize_memory()
+	initialize_logging()
+
+	successful := create_game(game_inst)
+	if !successful {
+		TFATAL("Failed to initialze game instance!")
+	}
+
 	if game_inst.render == nil ||
 	   game_inst.update == nil ||
 	   game_inst.initialize == nil ||
@@ -10,11 +17,15 @@ engine_main :: proc(game_inst: ^Game) {
 		TFATAL("The game's function pointers must be assigned!")
 	}
 
+
 	if !application_create(game_inst) {
-		TINFO("Application failed to create!")
+		TFATAL("Application failed to create!")
 	}
 
 	if !application_run() {
 		TINFO("Application did not shut down gracefully.")
 	}
+
+	shutdown_logging()
+	shutdown_memory()
 }

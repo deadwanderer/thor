@@ -4,7 +4,7 @@ import "core:fmt"
 import "core:mem"
 import "core:runtime"
 import "core:strings"
-import w "core:sys/windows"
+import w "../windows"
 
 
 when THOR_PLATFORM == .Windows {
