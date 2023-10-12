@@ -24,13 +24,13 @@ MemoryTag :: enum {
 	MaxTags,
 }
 
-@(private)
+@(private = "file")
 MemoryStats :: struct {
 	total_allocated:    u64,
 	tagged_allocations: [int(MemoryTag.MaxTags)]u64,
 }
 
-@(private)
+@(private = "file")
 _memory_tag_strings: [int(MemoryTag.MaxTags)]string = {
 	"         Unknown",
 	"           Array",
@@ -51,7 +51,7 @@ _memory_tag_strings: [int(MemoryTag.MaxTags)]string = {
 	"           Scene",
 }
 
-@(private)
+@(private = "file")
 STATS: MemoryStats
 
 @(export)

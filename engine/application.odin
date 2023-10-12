@@ -6,6 +6,7 @@ ApplicationConfig :: struct {
 	name:                      string,
 }
 
+@(private = "file")
 ApplicationState :: struct {
 	game_inst:                ^Game,
 	is_running, is_suspended: b8,
@@ -14,8 +15,10 @@ ApplicationState :: struct {
 	last_time:                f64,
 }
 
+@(private = "file")
 INITIALIZED: b8
 
+@(private = "file")
 APP_STATE: ApplicationState
 
 @(export)
@@ -35,6 +38,14 @@ application_create :: proc(game_inst: ^Game) -> b8 {
 	// TINFO("A test message: %f", 3.14)
 	// TDEBUG("A test message: %f", 3.14)
 	// TTRACE("A test message: %f", 3.14)
+
+
+	if !event_initialize() {
+		TERROR("Event system failed to initialize. Application cannot continue.")
+		return false
+	}
+
+	input_initialize()
 
 	APP_STATE.is_running = true
 	APP_STATE.is_suspended = false
@@ -83,10 +94,14 @@ application_run :: proc() -> b8 {
 				APP_STATE.is_running = false
 				break
 			}
+
+			input_update(0)
 		}
 	}
 
 	platform_shutdown(&APP_STATE.platform)
+	input_shutdown()
+	event_shutdown()
 
 	return true
 }
