@@ -171,63 +171,19 @@ when THOR_PLATFORM == .Windows {
 
 
 	@(private)
-	_platform_console_write :: proc(message: string, color: u8) {
+	_platform_console_write :: proc(message: string, level: LogLevel) {
 		using w
 		OutputDebugStringA(strings.clone_to_cstring(message))
 		console_handle: HANDLE = GetStdHandle(STD_OUTPUT_HANDLE)
-		levels: [6]u16 = {
-			BACKGROUND_RED, // Fatal, red background
-			FOREGROUND_RED, // Error, red text
-			FOREGROUND_RED | FOREGROUND_GREEN, // Warn, yellow text
-			FOREGROUND_GREEN, // Info, green text
-			FOREGROUND_BLUE, // Debug, blue text
-			FOREGROUND_INTENSITY, // Trace, white text
-		}
-		attributes: CONSOLE_SCREEN_BUFFER_INFO
-		result := GetConsoleScreenBufferInfo(console_handle, &attributes)
-		if !result {
-			fmt.println("Error getting console attributes")
-		}
-		fmt.println("console settings:", attributes.wAttributes)
-		SetConsoleTextAttribute(console_handle, levels[color])
-		length := len(message)
-		number_written: LPDWORD
-		WriteConsoleA(console_handle, raw_data(message), u32(length), number_written, nil)
-		curr_attributes: CONSOLE_SCREEN_BUFFER_INFO
-		GetConsoleScreenBufferInfo(console_handle, &curr_attributes)
-		fmt.println("curr console settings:", curr_attributes.wAttributes)
-
-		SetConsoleTextAttribute(console_handle, attributes.wAttributes)
+		output_colored_text(console_handle, message, level)
 	}
 
 	@(private)
-	_platform_console_write_error :: proc(message: string, color: u8) {
+	_platform_console_write_error :: proc(message: string, level: LogLevel) {
 		using w
 		OutputDebugStringA(strings.clone_to_cstring(message))
 		console_handle: HANDLE = GetStdHandle(STD_ERROR_HANDLE)
-		// output_colored_text(console_handle, message, LogLevel(color))
-		levels: [6]u16 = {
-			BACKGROUND_RED, // Fatal, red background
-			FOREGROUND_RED, // Error, red text
-			FOREGROUND_RED | FOREGROUND_GREEN, // Warn, yellow text
-			FOREGROUND_GREEN, // Info, green text
-			FOREGROUND_BLUE, // Debug, blue text
-			FOREGROUND_INTENSITY, // Trace, white text
-		}
-		attributes: CONSOLE_SCREEN_BUFFER_INFO
-		result := GetConsoleScreenBufferInfo(console_handle, &attributes)
-		if !result {
-			fmt.eprintln("Error getting console attributes")
-		}
-		fmt.println("console settings:", attributes.wAttributes)
-		SetConsoleTextAttribute(console_handle, levels[color])
-		length := len(message)
-		number_written: LPDWORD
-		WriteConsoleA(console_handle, raw_data(message), u32(length), number_written, nil)
-		curr_attributes: CONSOLE_SCREEN_BUFFER_INFO
-		GetConsoleScreenBufferInfo(console_handle, &curr_attributes)
-		fmt.println("curr console settings:", curr_attributes.wAttributes)
-		SetConsoleTextAttribute(console_handle, attributes.wAttributes)
+		output_colored_text(console_handle, message, level)
 	}
 
 	@(private)
@@ -239,92 +195,6 @@ when THOR_PLATFORM == .Windows {
 
 	@(private)
 	_platform_sleep :: proc(ms: u64) {w.Sleep(u32(ms))}
-
-	ESC: string : "\x1b"
-	CSI: string : ESC + "["
-
-	DEFAULT :: CSI + "0m"
-
-	Color :: enum {
-		Black,
-		Red,
-		Green,
-		Blue,
-		Yellow,
-		Magenta,
-		Cyan,
-		White,
-		BrightBlack,
-		BrightRed,
-		BrightGreen,
-		BrightBlue,
-		BrightYellow,
-		BrightMagenta,
-		BrightCyan,
-		BrightWhite,
-	}
-
-	ColorCode :: struct {
-		fg: cstring,
-		bg: cstring,
-	}
-
-	@(private = "file")
-	output_colored_text :: proc(handle: w.HANDLE, message: string, level: LogLevel) {
-		using w
-		codes: [Color]ColorCode = {
-			.Black = {"30", "40"},
-			.Red = {"31", "41"},
-			.Green = {"32", "42"},
-			.Yellow = {"33", "43"},
-			.Blue = {"34", "44"},
-			.Magenta = {"35", "45"},
-			.Cyan = {"36", "46"},
-			.White = {"37", "47"},
-			.BrightBlack = {"90", "100"},
-			.BrightRed = {"91", "101"},
-			.BrightGreen = {"92", "102"},
-			.BrightYellow = {"93", "103"},
-			.BrightBlue = {"94", "104"},
-			.BrightMagenta = {"95", "105"},
-			.BrightCyan = {"96", "106"},
-			.BrightWhite = {"97", "107"},
-		}
-
-		levelColors: [LogLevel]ColorCode = {
-			.Fatal = {codes[.Black].fg, codes[.Red].bg},
-			.Error = {codes[.Red].fg, codes[.Black].bg},
-			.Warn = {codes[.Yellow].fg, codes[.Black].bg},
-			.Info = {codes[.Green].fg, codes[.Black].bg},
-			.Debug = {codes[.Blue].fg, codes[.Black].bg},
-			.Trace = {codes[.White].fg, codes[.Black].bg},
-		}
-		consoleMode: DWORD
-		if !GetConsoleMode(handle, &consoleMode) {
-			fmt.eprintln("Failed to get console mode.")
-			return
-		}
-		if !SetConsoleMode(handle, consoleMode | ENABLE_VIRTUAL_TERMINAL_PROCESSING) {
-			fmt.eprintln("Failed to set console mode.")
-			return
-		}
-		outputString := fmt.tprintf(
-			"%s%sm%s%sm%s",
-			CSI,
-			levelColors[level].fg,
-			CSI,
-			levelColors[level].bg,
-			message,
-		)
-		length := len(outputString)
-		number_written: LPDWORD
-		WriteConsoleA(handle, raw_data(outputString), u32(length), number_written, nil)
-		WriteConsoleA(handle, raw_data(DEFAULT), u32(len(DEFAULT)), number_written, nil)
-		if !SetConsoleMode(handle, consoleMode) {
-			fmt.eprintln("Failed to reset console mode.")
-			return
-		}
-	}
 
 	@(private = "file")
 	win32_process_message :: proc "stdcall" (
@@ -368,6 +238,97 @@ when THOR_PLATFORM == .Windows {
 		return DefWindowProcA(hwnd, msg, w_param, l_param)
 	}
 
+
+	ESC: string : "\x1b"
+	CSI: string : ESC + "["
+	
+	DEFAULT :: CSI + "0m"
+	CLEARLINE :: CSI + "1K"
+	MOVESTART :: CSI + "1G"
+	
+	Color :: enum {
+		Black,
+		Red,
+		Green,
+		Blue,
+		Yellow,
+		Magenta,
+		Cyan,
+		White,
+		BrightBlack,
+		BrightRed,
+		BrightGreen,
+		BrightBlue,
+		BrightYellow,
+		BrightMagenta,
+		BrightCyan,
+		BrightWhite,
+	}
+	
+	ColorCode :: struct {
+		fg: cstring,
+		bg: cstring,
+	}
+	
+	@(private = "file")
+	output_colored_text :: proc(handle:w.HANDLE ,message: string, level: LogLevel) {
+		using w
+		codes: [Color]ColorCode = {
+			.Black = {"30", "40"},
+			.Red = {"31", "41"},
+			.Green = {"32", "42"},
+			.Yellow = {"33", "43"},
+			.Blue = {"34", "44"},
+			.Magenta = {"35", "45"},
+			.Cyan = {"36", "46"},
+			.White = {"37", "47"},
+			.BrightBlack = {"90", "100"},
+			.BrightRed = {"91", "101"},
+			.BrightGreen = {"92", "102"},
+			.BrightYellow = {"93", "103"},
+			.BrightBlue = {"94", "104"},
+			.BrightMagenta = {"95", "105"},
+			.BrightCyan = {"96", "106"},
+			.BrightWhite = {"97", "107"},
+		}
+	
+		levelColors: [LogLevel]ColorCode = {
+			.Fatal = {codes[.Black].fg, codes[.Red].bg},
+			.Error = {codes[.Red].fg, codes[.Black].bg},
+			.Warn = {codes[.Yellow].fg, codes[.Black].bg},
+			.Info = {codes[.Green].fg, codes[.Black].bg},
+			.Debug = {codes[.Blue].fg, codes[.Black].bg},
+			.Trace = {codes[.White].fg, codes[.Black].bg},
+		}
+	
+		outputString := fmt.tprintf(
+			"%s%s%s%sm%s%sm%s%s\n",
+			CLEARLINE,
+			MOVESTART,
+			CSI,
+			levelColors[level].fg,
+			CSI,
+			levelColors[level].bg,
+			message,
+			DEFAULT
+		)
+		consoleMode: DWORD
+		if !GetConsoleMode(handle, &consoleMode) {
+			fmt.eprintln("Failed to get console mode.")
+			return
+		}
+		if !SetConsoleMode(handle, consoleMode | ENABLE_VIRTUAL_TERMINAL_PROCESSING) {
+			fmt.eprintln("Failed to set console mode.")
+			return
+		}
+		length := len(outputString)
+		number_written: LPDWORD
+		WriteConsoleA(handle, raw_data(outputString), u32(length), number_written, nil)
+		if !SetConsoleMode(handle, consoleMode) {
+			fmt.eprintln("Failed to reset console mode.")
+			return
+		}
+	}
 }
 
 @(private = "file")

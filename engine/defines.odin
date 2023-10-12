@@ -11,4 +11,4 @@ ThorPlatform :: enum {
 	SDL,
 }
 
-THOR_PLATFORM: ThorPlatform : .SDL when THOR_PLATFORM_SDL else .Windows
+THOR_PLATFORM: ThorPlatform : .Windows when THOR_PLATFORM_WINDOWS else .SDL

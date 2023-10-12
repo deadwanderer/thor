@@ -1,5 +1,7 @@
 package engine
 
+import "core:fmt"
+
 PlatformState :: struct {
 	internal_state: InternalState,
 }
@@ -10,6 +12,7 @@ platform_startup :: proc(
 	application_name: string,
 	x, y, width, height: i32,
 ) -> b8 {
+	fmt.println("Starting up with platform:", THOR_PLATFORM)
 	return _platform_startup(plat_state, application_name, x, y, width, height)
 }
 
@@ -49,13 +52,13 @@ platform_set_memory :: proc(dest: rawptr, value: i32, size: u64) -> rawptr {
 }
 
 @(export)
-platform_console_write :: proc(message: string, color: u8) {
-	_platform_console_write(message, color)
+platform_console_write :: proc(message: string, level: LogLevel) {
+	_platform_console_write(message, level)
 }
 
 @(export)
-platform_console_write_error :: proc(message: string, color: u8) {
-	_platform_console_write_error(message, color)
+platform_console_write_error :: proc(message: string, level: LogLevel) {
+	_platform_console_write_error(message, level)
 }
 
 @(export)

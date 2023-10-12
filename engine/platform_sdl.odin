@@ -131,91 +131,17 @@ when THOR_PLATFORM == .SDL {
 		return mem.set(dest, byte(value), int(size))
 	}
 
-	ESC: string : "\x1b"
-	CSI: string : ESC + "["
 
-	DEFAULT :: CSI + "0m"
-	CLEARLINE :: CSI + "1K"
-	MOVESTART :: CSI + "1G"
-
-	Color :: enum {
-		Black,
-		Red,
-		Green,
-		Blue,
-		Yellow,
-		Magenta,
-		Cyan,
-		White,
-		BrightBlack,
-		BrightRed,
-		BrightGreen,
-		BrightBlue,
-		BrightYellow,
-		BrightMagenta,
-		BrightCyan,
-		BrightWhite,
-	}
-
-	ColorCode :: struct {
-		fg: cstring,
-		bg: cstring,
-	}
-
-	@(private = "file")
-	output_colored_text :: proc(message: string, level: LogLevel) {
-		codes: [Color]ColorCode = {
-			.Black = {"30", "40"},
-			.Red = {"31", "41"},
-			.Green = {"32", "42"},
-			.Yellow = {"33", "43"},
-			.Blue = {"34", "44"},
-			.Magenta = {"35", "45"},
-			.Cyan = {"36", "46"},
-			.White = {"37", "47"},
-			.BrightBlack = {"90", "100"},
-			.BrightRed = {"91", "101"},
-			.BrightGreen = {"92", "102"},
-			.BrightYellow = {"93", "103"},
-			.BrightBlue = {"94", "104"},
-			.BrightMagenta = {"95", "105"},
-			.BrightCyan = {"96", "106"},
-			.BrightWhite = {"97", "107"},
-		}
-
-		levelColors: [LogLevel]ColorCode = {
-			.Fatal = {codes[.Black].fg, codes[.Red].bg},
-			.Error = {codes[.Red].fg, codes[.Black].bg},
-			.Warn = {codes[.Yellow].fg, codes[.Black].bg},
-			.Info = {codes[.Green].fg, codes[.Black].bg},
-			.Debug = {codes[.Blue].fg, codes[.Black].bg},
-			.Trace = {codes[.White].fg, codes[.Black].bg},
-		}
-
-		outputString := fmt.tprintf(
-			"%s%s%s%sm%s%sm%s",
-			CLEARLINE,
-			MOVESTART,
-			CSI,
-			levelColors[level].fg,
-			CSI,
-			levelColors[level].bg,
-			message,
-		)
-
-		sdl.Log(strings.clone_to_cstring(outputString))
+	@(private)
+	_platform_console_write :: proc(message: string, level: LogLevel) {
+		using sdl
+		output_colored_text(message, level)
 	}
 
 	@(private)
-	_platform_console_write :: proc(message: string, color: u8) {
+	_platform_console_write_error :: proc(message: string, level: LogLevel) {
 		using sdl
-		output_colored_text(message, LogLevel(color))
-	}
-
-	@(private)
-	_platform_console_write_error :: proc(message: string, color: u8) {
-		using sdl
-		output_colored_text(message, LogLevel(color))
+		output_colored_text(message, level)
 	}
 
 	@(private)
@@ -225,5 +151,86 @@ when THOR_PLATFORM == .SDL {
 	}
 
 	@(private)
-	_platform_sleep :: proc(ms: u64) {sdl.Delay(u32(ms))}
+	_platform_sleep :: proc(ms: u64) {
+		sdl.Delay(u32(ms))
+	}
+
+	
+ESC: string : "\x1b"
+CSI: string : ESC + "["
+
+DEFAULT :: CSI + "0m"
+CLEARLINE :: CSI + "1K"
+MOVESTART :: CSI + "1G"
+
+Color :: enum {
+	Black,
+	Red,
+	Green,
+	Blue,
+	Yellow,
+	Magenta,
+	Cyan,
+	White,
+	BrightBlack,
+	BrightRed,
+	BrightGreen,
+	BrightBlue,
+	BrightYellow,
+	BrightMagenta,
+	BrightCyan,
+	BrightWhite,
 }
+
+ColorCode :: struct {
+	fg: cstring,
+	bg: cstring,
+}
+
+@(private = "file")
+output_colored_text :: proc(message: string, level: LogLevel) {
+	codes: [Color]ColorCode = {
+		.Black = {"30", "40"},
+		.Red = {"31", "41"},
+		.Green = {"32", "42"},
+		.Yellow = {"33", "43"},
+		.Blue = {"34", "44"},
+		.Magenta = {"35", "45"},
+		.Cyan = {"36", "46"},
+		.White = {"37", "47"},
+		.BrightBlack = {"90", "100"},
+		.BrightRed = {"91", "101"},
+		.BrightGreen = {"92", "102"},
+		.BrightYellow = {"93", "103"},
+		.BrightBlue = {"94", "104"},
+		.BrightMagenta = {"95", "105"},
+		.BrightCyan = {"96", "106"},
+		.BrightWhite = {"97", "107"},
+	}
+
+	levelColors: [LogLevel]ColorCode = {
+		.Fatal = {codes[.Black].fg, codes[.Red].bg},
+		.Error = {codes[.Red].fg, codes[.Black].bg},
+		.Warn = {codes[.Yellow].fg, codes[.Black].bg},
+		.Info = {codes[.Green].fg, codes[.Black].bg},
+		.Debug = {codes[.Blue].fg, codes[.Black].bg},
+		.Trace = {codes[.White].fg, codes[.Black].bg},
+	}
+
+	outputString := fmt.tprintf(
+		"%s%s%s%sm%s%sm%s%s\n",
+		CLEARLINE,
+		MOVESTART,
+		CSI,
+		levelColors[level].fg,
+		CSI,
+		levelColors[level].bg,
+		message,
+		DEFAULT
+	)
+
+	sdl.Log(strings.clone_to_cstring(outputString))
+}
+
+}
+

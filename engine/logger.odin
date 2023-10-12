@@ -38,11 +38,11 @@ log_output :: proc(level: LogLevel, message: string, args: ..any) {
 	is_error: b8 = level < LogLevel.Warn
 
 	formatted_message := fmt.tprintf(message, ..args)
-	out_message := fmt.tprintf("%s%s\n", level_strings[level], formatted_message)
+	out_message := fmt.tprintf("%s%s", level_strings[level], formatted_message)
 	if is_error {
-		platform_console_write_error(out_message, u8(level))
+		platform_console_write_error(out_message, level)
 	} else {
-		platform_console_write(out_message, u8(level))
+		platform_console_write(out_message, level)
 	}
 	// fmt.printf("%s%s\n", level_strings[level], out_message)
 }
