@@ -42,7 +42,7 @@ log_output :: proc(level: LogLevel, message: string, args: ..any) {
 	if is_error {
 		platform_console_write_error(out_message, u8(level))
 	} else {
-
+		platform_console_write(out_message, u8(level))
 	}
 	// fmt.printf("%s%s\n", level_strings[level], out_message)
 }
