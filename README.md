@@ -5,6 +5,7 @@ So far, it's just [Kohi](https://github.com/travisvroman/kohi) in Odin, but who 
 ## # ***\*NOTE\****
 
 **TODO** *What I should do is just copy the modified `core/sys/windows` folder into my project, and reference that...*
+
 Using the Windows platform currently requires manually editing a few files in `<ODIN_ROOT>/core/sys/windows` to include `A` versions of several functions that Odin only imports `W` versions of by default. This process can usually just be copy/pasting the `W` function, and tweaking a couple elements.
 
 In general, the difference is `<FuncName>A` instead of `<FuncName>W`, and change all strings from wide to regular (e.g. `LPCWSTR` -> `LPCSTR`)
