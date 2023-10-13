@@ -1,10 +1,10 @@
 package engine
 
+import w "../windows"
 import "core:fmt"
 import "core:mem"
 import "core:runtime"
 import "core:strings"
-import w "../windows"
 
 
 when THOR_PLATFORM == .Windows {
@@ -213,6 +213,8 @@ when THOR_PLATFORM == .Windows {
 			}
 		case WM_CLOSE:
 			{
+				data: EventContext = {}
+				event_fire(.ApplicationQuit, nil, data)
 				return 0
 			}
 		case WM_DESTROY:
@@ -222,19 +224,40 @@ when THOR_PLATFORM == .Windows {
 			}
 		case WM_SIZE:
 			{
+				r: RECT
+				GetClientRect(hwnd, &r)
+				width := u32(r.right - r.left)
+				height := u32(r.bottom - r.top)
 
+				data: EventContext = {}
+				data.data.u16[0] = u16(width)
+				data.data.u16[1] = u16(height)
+				event_fire(.Resized, nil, data)
 			}
 		case WM_KEYDOWN, WM_KEYUP, WM_SYSKEYDOWN, WM_SYSKEYUP:
 			{
-pressed :b8= msg == WM_KEYDOWN || msg == WM_SYSKEYDOWN
-key:Keys = Keys(u16(w_param))
+				pressed: b8 = msg == WM_KEYDOWN || msg == WM_SYSKEYDOWN
+				key: Keys = Keys(u16(w_param))
 
-input_process_key(key, pressed)
+				is_extended: b8 = (HIWORD(u32(l_param)) & KF_EXTENDED) == KF_EXTENDED
+
+				if w_param == VK_MENU {
+					key = .RAlt if is_extended else .LAlt
+				} else if w_param == VK_SHIFT {
+					left_shift: u32 = MapVirtualKeyA(VK_LSHIFT, MAPVK_VK_TO_VSC)
+					scancode: u32 = ((u32(l_param) & (0xFF << 16)) >> 16)
+					key = .LShift if scancode == left_shift else .RShift
+				} else if w_param == VK_CONTROL {
+					key = .RControl if is_extended else .LControl
+				}
+
+				input_process_key(key, pressed)
+				return 0
 			}
 		case WM_MOUSEMOVE:
 			{
-				x_position:i32 = GET_X_LPARAM(l_param)
-				y_position:i32 = GET_Y_LPARAM(l_param)
+				x_position: i32 = GET_X_LPARAM(l_param)
+				y_position: i32 = GET_Y_LPARAM(l_param)
 
 				input_process_mouse_move(i16(x_position), i16(y_position))
 			}
@@ -248,18 +271,22 @@ input_process_key(key, pressed)
 			}
 		case WM_LBUTTONDOWN, WM_MBUTTONDOWN, WM_RBUTTONDOWN, WM_LBUTTONUP, WM_MBUTTONUP, WM_RBUTTONUP:
 			{
-				pressed:b8 = msg == WM_LBUTTONDOWN || msg == WM_RBUTTONDOWN || msg == WM_MBUTTONDOWN
+				pressed: b8 =
+					msg == WM_LBUTTONDOWN || msg == WM_RBUTTONDOWN || msg == WM_MBUTTONDOWN
 				mouse_button := Buttons.MaxButtons
 				switch msg {
-					case WM_LBUTTONDOWN, WM_LBUTTONUP: {
+				case WM_LBUTTONDOWN, WM_LBUTTONUP:
+					{
 						mouse_button = Buttons.Left
 						break
 					}
-					case WM_RBUTTONDOWN, WM_RBUTTONUP: {
+				case WM_RBUTTONDOWN, WM_RBUTTONUP:
+					{
 						mouse_button = Buttons.Right
 						break
 					}
-					case WM_MBUTTONDOWN, WM_MBUTTONUP: {
+				case WM_MBUTTONDOWN, WM_MBUTTONUP:
+					{
 						mouse_button = Buttons.Middle
 						break
 					}
@@ -277,11 +304,11 @@ input_process_key(key, pressed)
 
 	ESC: string : "\x1b"
 	CSI: string : ESC + "["
-	
+
 	DEFAULT :: CSI + "0m"
 	CLEARLINE :: CSI + "1K"
 	MOVESTART :: CSI + "1G"
-	
+
 	Color :: enum {
 		Black,
 		Red,
@@ -300,14 +327,14 @@ input_process_key(key, pressed)
 		BrightCyan,
 		BrightWhite,
 	}
-	
+
 	ColorCode :: struct {
 		fg: cstring,
 		bg: cstring,
 	}
-	
+
 	@(private = "file")
-	output_colored_text :: proc(handle:w.HANDLE ,message: string, level: LogLevel) {
+	output_colored_text :: proc(handle: w.HANDLE, message: string, level: LogLevel) {
 		using w
 		codes: [Color]ColorCode = {
 			.Black = {"30", "40"},
@@ -327,7 +354,7 @@ input_process_key(key, pressed)
 			.BrightCyan = {"96", "106"},
 			.BrightWhite = {"97", "107"},
 		}
-	
+
 		levelColors: [LogLevel]ColorCode = {
 			.Fatal = {codes[.Black].fg, codes[.Red].bg},
 			.Error = {codes[.Red].fg, codes[.Black].bg},
@@ -336,7 +363,7 @@ input_process_key(key, pressed)
 			.Debug = {codes[.Blue].fg, codes[.Black].bg},
 			.Trace = {codes[.White].fg, codes[.Black].bg},
 		}
-	
+
 		outputString := fmt.tprintf(
 			"%s%s%s%sm%s%sm%s%s\n",
 			CLEARLINE,
@@ -346,7 +373,7 @@ input_process_key(key, pressed)
 			CSI,
 			levelColors[level].bg,
 			message,
-			DEFAULT
+			DEFAULT,
 		)
 		consoleMode: DWORD
 		if !GetConsoleMode(handle, &consoleMode) {

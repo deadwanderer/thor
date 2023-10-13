@@ -118,6 +118,7 @@ foreign user32 {
 
 	GetKeyboardState :: proc(lpKeyState: PBYTE) -> BOOL ---
 
+	MapVirtualKeyA :: proc(uCode: UINT, uMapType: UINT) -> UINT ---
 	MapVirtualKeyW :: proc(uCode: UINT, uMapType: UINT) -> UINT ---
 
 	SetWindowsHookExW :: proc(idHook: c_int, lpfn: HOOKPROC, hmod: HINSTANCE, dwThreadId: DWORD) -> HHOOK ---
