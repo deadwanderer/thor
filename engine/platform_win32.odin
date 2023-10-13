@@ -263,10 +263,10 @@ when THOR_PLATFORM == .Windows {
 			}
 		case WM_MOUSEWHEEL:
 			{
-				z_delta := GET_WHEEL_DELTA_WPARAM(w_param)
-				if z_delta != 0 {
-					z_delta = -1 if z_delta < 0 else 1
-					input_process_mouse_wheel(i8(z_delta))
+				scroll_delta := GET_WHEEL_DELTA_WPARAM(w_param)
+				if scroll_delta != 0 {
+					scroll_delta = -1 if scroll_delta < 0 else 1
+					input_process_mouse_wheel(i8(scroll_delta))
 				}
 			}
 		case WM_LBUTTONDOWN, WM_MBUTTONDOWN, WM_RBUTTONDOWN, WM_LBUTTONUP, WM_MBUTTONUP, WM_RBUTTONUP:

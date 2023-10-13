@@ -10,27 +10,24 @@ Buttons :: enum {
 Keys :: enum {
 	/** @brief The backspace key. */
 	Backspace   = 0x08,
-	/** @brief The enter key. */
-	Enter       = 0x0D,
 	/** @brief The tab key. */
 	Tab         = 0x09,
+	/** @brief The enter key. */
+	Enter       = 0x0D,
 	/** @brief The shift key. */
 	Shift       = 0x10,
 	/** @brief The Control/Ctrl key. */
 	Control     = 0x11,
-
 	/** @brief The pause key. */
 	Pause       = 0x13,
 	/** @brief The Caps Lock key. */
-	Capital     = 0x14,
-
+	CapsLock    = 0x14,
 	/** @brief The Escape key. */
 	Escape      = 0x1B,
 	Convert     = 0x1C,
 	NonConvert  = 0x1D,
 	Accept      = 0x1E,
 	ModeChange  = 0x1F,
-
 	/** @brief The spacebar key. */
 	Space       = 0x20,
 	/** @brief The page up key. */
@@ -59,7 +56,6 @@ Keys :: enum {
 	/** @brief The delete key. */
 	Delete      = 0x2E,
 	Help        = 0x2F,
-
 	/** @brief The 0 key */
 	Num0        = 0x30,
 	/** @brief The 1 key */
@@ -80,7 +76,6 @@ Keys :: enum {
 	Num8        = 0x38,
 	/** @brief The 9 key */
 	Num9        = 0x39,
-
 	/** @brief The A key. */
 	A           = 0x41,
 	/** @brief The B key. */
@@ -133,17 +128,14 @@ Keys :: enum {
 	Y           = 0x59,
 	/** @brief The Z key. */
 	Z           = 0x5A,
-
 	/** @brief The left Windows/Super key. */
 	LSuper      = 0x5B,
 	/** @brief The right Windows/Super key. */
 	RSuper      = 0x5C,
 	/** @brief The applicatons key. */
 	Apps        = 0x5D,
-
 	/** @brief The sleep key. */
 	Sleep       = 0x5F,
-
 	/** @brief The numberpad 0 key. */
 	NumPad0     = 0x60,
 	/** @brief The numberpad 1 key. */
@@ -176,7 +168,6 @@ Keys :: enum {
 	Decimal     = 0x6E,
 	/** @brief The numberpad divide key. */
 	Divide      = 0x6F,
-
 	/** @brief The F1 key. */
 	F1          = 0x70,
 	/** @brief The F2 key. */
@@ -225,16 +216,12 @@ Keys :: enum {
 	F23         = 0x86,
 	/** @brief The F24 key. */
 	F24         = 0x87,
-
 	/** @brief The number lock key. */
 	NumLock     = 0x90,
-
 	/** @brief The scroll lock key. */
 	Scroll      = 0x91,
-
 	/** @brief The numberpad equal key. */
 	NumPadEqual = 0x92,
-
 	/** @brief The left shift key. */
 	LShift      = 0xA0,
 	/** @brief The right shift key. */
@@ -247,10 +234,8 @@ Keys :: enum {
 	LAlt        = 0xA4,
 	/** @brief The right alt key. */
 	RAlt        = 0xA5,
-
 	/** @brief The semicolon key. */
 	Semicolon   = 0x3B,
-
 	/** @brief The apostrophe/single-quote key */
 	Apostrophe  = 0xDE,
 	/** @brief An alias for Apostrophe, apostrophe/single-quote key */
@@ -265,10 +250,8 @@ Keys :: enum {
 	Period      = 0xBE,
 	/** @brief The slash key. */
 	Slash       = 0xBF,
-
 	/** @brief The grave key. */
 	Grave       = 0xC0,
-
 	/** @brief The left (square) bracket key e.g. [{ */
 	LBracket    = 0xDB,
 	/** @brief The pipe/backslash key */
@@ -340,11 +323,7 @@ input_process_key :: proc(key: Keys, pressed: b8) {
 
 		ctx: EventContext = {}
 		ctx.data.key = key
-		event_fire(
-			SystemEventCode.KeyPressed if pressed else SystemEventCode.KeyReleased,
-			nil,
-			ctx,
-		)
+		event_fire(.KeyPressed if pressed else .KeyReleased, nil, ctx)
 	}
 }
 
@@ -414,30 +393,27 @@ input_process_button :: proc(button: Buttons, pressed: b8) {
 
 		ctx: EventContext = {}
 		ctx.data.button = button
-		event_fire(
-			SystemEventCode.ButtonPressed if pressed else SystemEventCode.ButtonReleased,
-			nil,
-			ctx,
-		)
+		event_fire(.ButtonPressed if pressed else .ButtonReleased, nil, ctx)
 	}
 }
 
 input_process_mouse_move :: proc(x, y: i16) {
 	if STATE.mouse_current.x != x || STATE.mouse_current.y != y {
+		// TDEBUG("Mouse pos: %i, %i", x, y)
 		STATE.mouse_current.x = x
 		STATE.mouse_current.y = y
 
 		ctx: EventContext = {}
 		ctx.data.i16[0] = x
 		ctx.data.i16[1] = y
-		event_fire(SystemEventCode.MouseMoved, nil, ctx)
+		event_fire(.MouseMoved, nil, ctx)
 	}
 }
 
 input_process_mouse_wheel :: proc(z_delta: i8) {
 	ctx: EventContext = {}
 	ctx.data.i8[0] = z_delta
-	event_fire(SystemEventCode.MouseWheel, nil, ctx)
+	event_fire(.MouseWheel, nil, ctx)
 }
 
 @(private = "file")
