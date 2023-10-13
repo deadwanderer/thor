@@ -1,16 +1,17 @@
 package engine
 
+import sdl "vendor:sdl2"
+import vk "vendor:vulkan"
+
 import "core:fmt"
 import "core:mem"
 import "core:strings"
-import sdl "vendor:sdl2"
 
 
 when THOR_PLATFORM == .SDL {
 
 	@(private)
 	InternalState :: struct {
-		// h_instance: w.HINSTANCE,
 		window: ^sdl.Window,
 	}
 
@@ -180,6 +181,59 @@ when THOR_PLATFORM == .SDL {
 	@(private)
 	_platform_get_vkgetinstanceprocaddr_function :: proc() -> rawptr {
 		return sdl.Vulkan_GetVkGetInstanceProcAddr()
+	}
+
+	@(private)
+	_platform_get_required_extension_names :: proc(plat_state: ^PlatformState) -> []cstring {
+		extension_count: u32
+		success := sdl.Vulkan_GetInstanceExtensions(
+			plat_state.internal_state.window,
+			&extension_count,
+			nil,
+		)
+		if !success {
+			TFATAL(
+				"Failed to get Vulkan instance extension count from SDL. Application cannot continue.",
+			)
+			data: EventContext = {}
+			event_fire(.ApplicationQuit, nil, data)
+			return nil
+		}
+		extensions := make([]cstring, extension_count)
+		success = sdl.Vulkan_GetInstanceExtensions(
+			plat_state.internal_state.window,
+			&extension_count,
+			raw_data(extensions),
+		)
+		if !success {
+			TFATAL(
+				"Failed to get Vulkan instance extensions from SDL. Application cannot continue.",
+			)
+			data: EventContext = {}
+			event_fire(.ApplicationQuit, nil, data)
+			return nil
+		}
+		return extensions
+	}
+
+	@(private)
+	_platform_create_vulkan_surface :: proc(
+		plat_state: ^PlatformState,
+		ctx: ^VulkanContext,
+	) -> b8 {
+		state: ^InternalState = &plat_state.internal_state
+
+		result := sdl.Vulkan_CreateSurface(state.window, ctx.instance, &ctx.surface)
+		if !result {
+			TFATAL("Failed to create Vulkan surface!")
+			return false
+		}
+		return true
+	}
+
+	@(private)
+	_platform_destroy_vulkan_surface :: proc(ctx: ^VulkanContext) {
+		vk.DestroySurfaceKHR(ctx.instance, ctx.surface, nil)
 	}
 
 

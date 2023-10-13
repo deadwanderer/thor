@@ -125,12 +125,18 @@ application_run :: proc() -> b8 {
 			frame_elapsed_time := frame_end_time - frame_start_time
 			running_time += frame_elapsed_time
 			remaining_seconds := target_frame_seconds - frame_elapsed_time
+			// TTRACE(
+			// 	"Frame elapsed time: %v, remaining time: %v",
+			// 	frame_elapsed_time * 1000.0,
+			// 	remaining_seconds * 1000.0,
+			// )
 
 			if remaining_seconds > 0 {
 				remaining_ms := u64(remaining_seconds * 1000.0)
 
-				limit_frames: b8 = false
+				limit_frames: b8 = true
 				if remaining_ms > 0 && limit_frames {
+					// TTRACE("Sleeping for %v ms", remaining_ms)
 					platform_sleep(remaining_ms)
 				}
 			}

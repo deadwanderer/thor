@@ -1,6 +1,8 @@
 package engine
 
-import w "../windows"
+import w "core:sys/windows"
+import vk "vendor:vulkan"
+
 import "core:fmt"
 import "core:mem"
 import "core:runtime"
@@ -221,6 +223,40 @@ when THOR_PLATFORM == .Windows {
 			return nil
 		}
 		return result
+	}
+
+	@(private)
+	_platform_get_required_extension_names :: proc(_: ^PlatformState) -> []cstring {
+		result := make([]cstring, 2)
+		result[0] = "VK_KHR_win32_surface"
+		result[1] = "VK_KHR_surface"
+		return result
+	}
+
+	@(private)
+	_platform_create_vulkan_surface :: proc(
+		plat_state: ^PlatformState,
+		ctx: ^VulkanContext,
+	) -> b8 {
+		state: ^InternalState = &plat_state.internal_state
+
+		create_info: vk.Win32SurfaceCreateInfoKHR = {
+			sType     = .WIN32_SURFACE_CREATE_INFO_KHR,
+			hinstance = state.h_instance,
+			hwnd      = state.hwnd,
+		}
+
+		result := vk.CreateWin32SurfaceKHR(ctx.instance, &create_info, nil, &ctx.surface)
+		if result != .SUCCESS {
+			TFATAL("Vulkan surface creation failed.")
+			return false
+		}
+		return true
+	}
+
+	@(private)
+	_platform_destroy_vulkan_surface :: proc(ctx: ^VulkanContext) {
+		vk.DestroySurfaceKHR(ctx.instance, ctx.surface, ctx.allocator)
 	}
 
 	@(private = "file")

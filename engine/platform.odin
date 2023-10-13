@@ -75,6 +75,22 @@ platform_sleep :: proc(ms: u64) {
 	_platform_sleep(ms)
 }
 
+@(private)
 platform_get_vkgetinstanceprocaddr_function :: proc() -> rawptr {
 	return _platform_get_vkgetinstanceprocaddr_function()
+}
+
+@(private)
+platform_get_required_extension_names :: proc(
+	plat_state: ^PlatformState,
+) -> []cstring {return _platform_get_required_extension_names(plat_state)}
+
+@(private)
+platform_create_vulkan_surface :: proc(plat_state: ^PlatformState, ctx: ^VulkanContext) -> b8 {
+	return _platform_create_vulkan_surface(plat_state, ctx)
+}
+
+@(private)
+platform_destroy_vulkan_surface :: proc(ctx: ^VulkanContext) {
+	_platform_destroy_vulkan_surface(ctx)
 }
