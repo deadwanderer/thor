@@ -116,6 +116,7 @@ GIB :: MIB * 1024
 @(export)
 get_memory_usage_str :: proc() -> string {
 	sb := strings.builder_make()
+	defer strings.builder_destroy(&sb)
 	strings.write_string(&sb, "System memory use (tagged):\n")
 	unit: string
 	amount: f32

@@ -1,9 +1,15 @@
 package engine
 
 import "core:fmt"
+import "core:strings"
+
+@(private = "file")
+ENGINE_NAME: cstring : "Thor Engine"
 
 PlatformState :: struct {
-	internal_state: InternalState,
+	internal_state:   InternalState,
+	application_name: cstring,
+	engine_name:      cstring,
 }
 
 @(export)
@@ -13,12 +19,15 @@ platform_startup :: proc(
 	x, y, width, height: i32,
 ) -> b8 {
 	TINFO("Starting up with platform %s", THOR_PLATFORM)
+	plat_state.application_name = strings.clone_to_cstring(application_name)
+	plat_state.engine_name = ENGINE_NAME
 	return _platform_startup(plat_state, application_name, x, y, width, height)
 }
 
 @(export)
 platform_shutdown :: proc(plat_state: ^PlatformState) {
 	_platform_shutdown(plat_state)
+	delete(plat_state.application_name)
 }
 
 @(export)
@@ -64,4 +73,8 @@ platform_get_absolute_time :: proc() -> f64 {
 @(export)
 platform_sleep :: proc(ms: u64) {
 	_platform_sleep(ms)
+}
+
+platform_get_vkgetinstanceprocaddr_function :: proc() -> rawptr {
+	return _platform_get_vkgetinstanceprocaddr_function()
 }

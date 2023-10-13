@@ -12,6 +12,7 @@ ApplicationState :: struct {
 	is_running, is_suspended: b8,
 	platform:                 PlatformState,
 	width, height:            i16,
+	clock:                    Clock,
 	last_time:                f64,
 }
 
@@ -66,6 +67,11 @@ application_create :: proc(game_inst: ^Game) -> b8 {
 		return false
 	}
 
+	if !renderer_initialize(APP_STATE.game_inst.app_config.name, &APP_STATE.platform) {
+		TFATAL("Failed to initialize renderer. Aborting application.")
+		return false
+	}
+
 	if !APP_STATE.game_inst.initialize(APP_STATE.game_inst) {
 		TFATAL("Game failed to initialize.")
 		return false
@@ -80,6 +86,13 @@ application_create :: proc(game_inst: ^Game) -> b8 {
 
 @(export)
 application_run :: proc() -> b8 {
+	clock_start(&APP_STATE.clock)
+	clock_update(&APP_STATE.clock)
+	APP_STATE.last_time = APP_STATE.clock.elapsed
+	running_time: f64 = 0
+	frame_count: u64 = 0
+	target_frame_seconds: f64 = 1.0 / 60.0
+
 	TINFO(get_memory_usage_str())
 
 	for APP_STATE.is_running {
@@ -88,19 +101,44 @@ application_run :: proc() -> b8 {
 		}
 
 		if !APP_STATE.is_suspended {
-			if !APP_STATE.game_inst.update(APP_STATE.game_inst, 0.0) {
+			clock_update(&APP_STATE.clock)
+			current_time: f64 = APP_STATE.clock.elapsed
+			delta: f64 = current_time - APP_STATE.last_time
+			frame_start_time := platform_get_absolute_time()
+			if !APP_STATE.game_inst.update(APP_STATE.game_inst, f32(delta)) {
 				TFATAL("Game update failed, shutting down")
 				APP_STATE.is_running = false
 				break
 			}
 
-			if !APP_STATE.game_inst.render(APP_STATE.game_inst, 0.0) {
+			if !APP_STATE.game_inst.render(APP_STATE.game_inst, f32(delta)) {
 				TFATAL("Game render failed, shutting down")
 				APP_STATE.is_running = false
 				break
 			}
 
-			input_update(0)
+			packet: RenderPacket = {}
+			packet.delta_time = f32(delta)
+			renderer_draw_frame(&packet)
+
+			frame_end_time := platform_get_absolute_time()
+			frame_elapsed_time := frame_end_time - frame_start_time
+			running_time += frame_elapsed_time
+			remaining_seconds := target_frame_seconds - frame_elapsed_time
+
+			if remaining_seconds > 0 {
+				remaining_ms := u64(remaining_seconds * 1000.0)
+
+				limit_frames: b8 = false
+				if remaining_ms > 0 && limit_frames {
+					platform_sleep(remaining_ms)
+				}
+			}
+			frame_count += 1
+
+			input_update(delta)
+
+			APP_STATE.last_time = current_time
 		}
 	}
 
@@ -109,6 +147,8 @@ application_run :: proc() -> b8 {
 	event_unregister(.ApplicationQuit, nil, application_on_event)
 	event_unregister(.KeyPressed, nil, application_on_key)
 	event_unregister(.KeyReleased, nil, application_on_key)
+
+	renderer_shutdown()
 	input_shutdown()
 	event_shutdown()
 
@@ -150,11 +190,11 @@ application_on_key :: proc(
 				}
 			case .A:
 				{
-					TDEBUG("Explicit - 'A' key pressed!")
+					// TDEBUG("Explicit - 'A' key pressed!")
 				}
 			case:
 				{
-					TDEBUG("'%v' key pressed in window.", ctx.data.key)
+					// TDEBUG("'%v' key pressed in window.", ctx.data.key)
 				}
 			}
 		}
@@ -163,11 +203,11 @@ application_on_key :: proc(
 			#partial switch ctx.data.key {
 			case .B:
 				{
-					TDEBUG("Explicit - 'B' key released!")
+					// TDEBUG("Explicit - 'B' key released!")
 				}
 			case:
 				{
-					TDEBUG("'%v' key released in window.", ctx.data.key)
+					// TDEBUG("'%v' key released in window.", ctx.data.key)
 				}
 			}
 		}

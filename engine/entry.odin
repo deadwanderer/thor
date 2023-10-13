@@ -1,7 +1,11 @@
 package engine
 
 
-engine_main :: proc(game_inst: ^Game, create_game: proc(out_game: ^Game) -> b8) {
+engine_main :: proc(
+	game_inst: ^Game,
+	create_game: proc(out_game: ^Game) -> b8,
+	shutdown_game: proc(out_game: ^Game),
+) {
 	initialize_memory()
 	initialize_logging()
 
@@ -25,6 +29,8 @@ engine_main :: proc(game_inst: ^Game, create_game: proc(out_game: ^Game) -> b8) 
 	if !application_run() {
 		TINFO("Application did not shut down gracefully.")
 	}
+
+	shutdown_game(game_inst)
 
 	shutdown_logging()
 	shutdown_memory()

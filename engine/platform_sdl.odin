@@ -34,7 +34,7 @@ when THOR_PLATFORM == .SDL {
 		}
 
 		state.window = CreateWindow(
-			strings.clone_to_cstring(application_name),
+			plat_state.application_name,
 			x,
 			y,
 			width,
@@ -177,6 +177,11 @@ when THOR_PLATFORM == .SDL {
 		sdl.Delay(u32(ms))
 	}
 
+	@(private)
+	_platform_get_vkgetinstanceprocaddr_function :: proc() -> rawptr {
+		return sdl.Vulkan_GetVkGetInstanceProcAddr()
+	}
+
 
 	ESC: string : "\x1b"
 	CSI: string : ESC + "["
@@ -251,7 +256,9 @@ when THOR_PLATFORM == .SDL {
 			DEFAULT,
 		)
 
-		sdl.Log(strings.clone_to_cstring(outputString))
+		log_msg := strings.clone_to_cstring(outputString)
+		defer delete(log_msg)
+		sdl.Log(log_msg)
 	}
 
 	@(private = "file")

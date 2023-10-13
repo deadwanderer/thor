@@ -80,7 +80,7 @@ when THOR_PLATFORM == .Windows {
 		handle: HWND = CreateWindowExA(
 			window_ex_style,
 			window_class_name,
-			strings.clone_to_cstring(application_name),
+			plat_state.application_name,
 			window_style,
 			window_x,
 			window_y,
@@ -173,7 +173,9 @@ when THOR_PLATFORM == .Windows {
 	@(private)
 	_platform_console_write :: proc(message: string, level: LogLevel) {
 		using w
-		OutputDebugStringA(strings.clone_to_cstring(message))
+		log_msg := strings.clone_to_cstring(message)
+		defer delete(log_msg)
+		OutputDebugStringA(log_msg)
 		console_handle: HANDLE = GetStdHandle(STD_OUTPUT_HANDLE)
 		output_colored_text(console_handle, message, level)
 	}
@@ -181,7 +183,9 @@ when THOR_PLATFORM == .Windows {
 	@(private)
 	_platform_console_write_error :: proc(message: string, level: LogLevel) {
 		using w
-		OutputDebugStringA(strings.clone_to_cstring(message))
+		log_msg := strings.clone_to_cstring(message)
+		defer delete(log_msg)
+		OutputDebugStringA(log_msg)
 		console_handle: HANDLE = GetStdHandle(STD_ERROR_HANDLE)
 		output_colored_text(console_handle, message, level)
 	}
@@ -195,6 +199,29 @@ when THOR_PLATFORM == .Windows {
 
 	@(private)
 	_platform_sleep :: proc(ms: u64) {w.Sleep(u32(ms))}
+
+	@(private)
+	_platform_get_vkgetinstanceprocaddr_function :: proc() -> rawptr {
+		vulkan_dll: cstring = "vulkan-1.dll"
+		fn_name: cstring = "vkGetInstanceProcAddr"
+		module := w.LoadLibraryA(vulkan_dll)
+		if module == nil {
+			TFATAL("Failed to load Vulkan library module. Application cannot continue.")
+			data: EventContext = {}
+			event_fire(.ApplicationQuit, nil, data)
+			return nil
+		}
+		result := w.GetProcAddress(module, fn_name)
+		if result == nil {
+			TFATAL(
+				"Failed to load vkGetInstanceProcAddr function address. Application cannot continue.",
+			)
+			data: EventContext = {}
+			event_fire(.ApplicationQuit, nil, data)
+			return nil
+		}
+		return result
+	}
 
 	@(private = "file")
 	win32_process_message :: proc "stdcall" (
