@@ -148,13 +148,13 @@ application_run :: proc() -> b8 {
 		}
 	}
 
+	renderer_shutdown()
 	platform_shutdown(&APP_STATE.platform)
 
 	event_unregister(.ApplicationQuit, nil, application_on_event)
 	event_unregister(.KeyPressed, nil, application_on_key)
 	event_unregister(.KeyReleased, nil, application_on_key)
 
-	renderer_shutdown()
 	input_shutdown()
 	event_shutdown()
 
